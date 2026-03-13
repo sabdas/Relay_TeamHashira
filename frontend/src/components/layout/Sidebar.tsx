@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
+import Logo from '@/components/ui/Logo'
 import clsx from 'clsx'
 
 const NAV_ITEMS = [
@@ -69,13 +70,10 @@ export default function Sidebar() {
   const { user, logout } = useAuth()
 
   return (
-    <aside className="hidden md:flex flex-col w-60 h-full bg-white border-r border-gray-100 fixed left-0 top-0 z-30">
+    <aside className="hidden md:flex flex-col w-60 h-full bg-surface border-r border-border-subtle fixed left-0 top-0 z-30">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100">
-        <div className="w-7 h-7 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
-          <span className="text-white font-bold text-xs">R</span>
-        </div>
-        <span className="font-semibold text-base text-primary">Relay</span>
+      <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border-subtle">
+        <Logo size="sm" />
         {user?.is_demo_user && (
           <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
             Demo
@@ -92,13 +90,13 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group',
+                'flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm font-medium transition-all group',
                 isActive
                   ? 'bg-accent-light text-accent'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-primary'
+                  : 'text-ink-3 hover:bg-parch-2 hover:text-primary'
               )}
             >
-              <span className={clsx('flex-shrink-0', isActive ? 'text-accent' : 'text-gray-400 group-hover:text-primary')}>
+              <span className={clsx('flex-shrink-0', isActive ? 'text-accent' : 'text-ink-4 group-hover:text-primary')}>
                 {item.icon}
               </span>
               <span className="flex-1">{item.label}</span>
@@ -113,7 +111,7 @@ export default function Sidebar() {
       </nav>
 
       {/* User footer */}
-      <div className="px-3 py-4 border-t border-gray-100">
+      <div className="px-3 py-4 border-t border-border-subtle">
         {user && (
           <div className="flex items-center gap-3 px-3 py-2.5">
             <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center flex-shrink-0">
@@ -123,12 +121,12 @@ export default function Sidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-primary truncate">{user.name}</p>
-              <p className="text-xs text-gray-400 truncate">{user.company}</p>
+              <p className="text-xs text-ink-4 truncate">{user.company}</p>
             </div>
             <button
               onClick={logout}
               title="Sign out"
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-ink-4 hover:text-ink-2 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

@@ -1,14 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #F8F7F4;
+  --background: #F7F3EE;
+  --parch-2: #EDE7DF;
+  --parch-3: #E2D9CE;
   --surface: #FFFFFF;
-  --primary: #1A1A1A;
-  --accent: #6366F1;
+  --primary: #16120E;
+  --ink-2: #4A4238;
+  --ink-3: #8C7E72;
+  --ink-4: #B8AFA7;
+  --accent: #C0460A;
+  --accent-light: #F5E4DA;
+  --border: #D8CEC3;
 }
 
 * {
@@ -16,9 +23,9 @@
 }
 
 body {
-  background-color: #F8F7F4;
-  color: #1A1A1A;
-  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #F7F3EE;
+  color: #16120E;
+  font-family: 'DM Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -32,11 +39,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #D1D5DB;
+  background: #C0B3A4;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF;
+  background: #8C7E72;
 }
 
 /* Touch targets */

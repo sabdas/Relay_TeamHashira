@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Logo from '@/components/ui/Logo'
 
 export default function LandingPage() {
   const router = useRouter()
@@ -40,15 +41,10 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 md:px-12">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">R</span>
-          </div>
-          <span className="font-semibold text-lg text-primary">Relay</span>
-        </div>
+        <Logo size="md" />
         <button
           onClick={handleGoogleLogin}
-          className="text-sm text-gray-500 hover:text-primary transition-colors touch-target flex items-center"
+          className="text-sm text-ink-3 hover:text-primary transition-colors touch-target flex items-center"
         >
           Sign in
         </button>
@@ -64,13 +60,13 @@ export default function LandingPage() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary leading-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-primary font-serif leading-tight">
             Your deals,{' '}
-            <span className="text-accent">reconstructed.</span>
+            <span className="text-accent italic">reconstructed.</span>
           </h1>
 
           {/* Subhead */}
-          <p className="text-lg md:text-xl text-gray-500 max-w-lg mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-ink-3 max-w-lg mx-auto leading-relaxed">
             Relay automatically reconstructs deal activity from Gmail, Calendar, and Notion —
             turning scattered signals into a daily action surface.
           </p>
@@ -80,7 +76,7 @@ export default function LandingPage() {
             <button
               onClick={handleDemoLogin}
               disabled={isLoading}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-accent text-white px-6 py-3 rounded-xl font-medium text-base hover:bg-indigo-700 transition-colors touch-target disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-accent text-white px-6 py-3 rounded-[10px] font-medium text-base hover:opacity-80 transition-opacity touch-target disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -103,7 +99,7 @@ export default function LandingPage() {
 
             <button
               onClick={handleGoogleLogin}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white border border-gray-200 text-primary px-6 py-3 rounded-xl font-medium text-base hover:bg-gray-50 transition-colors touch-target shadow-sm"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-surface border border-border-subtle text-primary px-6 py-3 rounded-[10px] font-medium text-base hover:bg-parch-2 transition-colors touch-target shadow-card"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -115,7 +111,7 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <p className="text-xs text-gray-400 mt-4">
+          <p className="text-xs text-ink-4 mt-4">
             Demo mode uses mock data. No real emails or calendar accessed.
           </p>
         </div>
@@ -141,18 +137,18 @@ export default function LandingPage() {
           ].map((f) => (
             <div
               key={f.title}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+              className="bg-surface rounded-[10px] p-6 shadow-card border border-border-subtle"
             >
               <div className="text-2xl mb-3">{f.icon}</div>
               <h3 className="font-semibold text-primary mb-1">{f.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+              <p className="text-sm text-ink-3 leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="py-8 text-center text-xs text-gray-400">
+      <footer className="py-8 text-center text-xs text-ink-4">
         © 2024 Relay. Built for founders who move fast.
       </footer>
     </div>

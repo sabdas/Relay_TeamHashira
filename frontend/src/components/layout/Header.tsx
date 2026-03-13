@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useApp } from '@/context/AppContext'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import Logo from '@/components/ui/Logo'
 
 const PAGE_TITLES: Record<string, string> = {
   '/app/today': 'Today',
@@ -27,11 +28,11 @@ export default function Header() {
   })
 
   return (
-    <header className="fixed top-0 left-0 right-0 md:left-60 z-20 h-14 bg-white border-b border-gray-100 flex items-center px-4 md:px-6 gap-4">
+    <header className="fixed top-0 left-0 right-0 md:left-60 z-20 h-14 bg-surface border-b border-border-subtle flex items-center px-4 md:px-6 gap-4">
       {/* Mobile: hamburger */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="md:hidden p-2 -ml-2 text-gray-500 hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="md:hidden p-2 -ml-2 text-ink-3 hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
         aria-label="Open menu"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -40,17 +41,14 @@ export default function Header() {
       </button>
 
       {/* Mobile logo */}
-      <Link href="/app/today" className="md:hidden flex items-center gap-1.5">
-        <div className="w-6 h-6 bg-accent rounded-md flex items-center justify-center">
-          <span className="text-white font-bold text-xs">R</span>
-        </div>
-        <span className="font-semibold text-sm text-primary">Relay</span>
+      <Link href="/app/today" className="md:hidden">
+        <Logo size="sm" />
       </Link>
 
       {/* Desktop title */}
       <div className="hidden md:block flex-1">
         <h1 className="font-semibold text-base text-primary">{title}</h1>
-        <p className="text-xs text-gray-400">{today}</p>
+        <p className="text-xs text-ink-4">{today}</p>
       </div>
 
       <div className="flex-1 md:hidden" />
@@ -68,7 +66,7 @@ export default function Header() {
           <button
             onClick={logout}
             title={`${user.name} — Sign out`}
-            className="w-8 h-8 bg-accent rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors min-h-[44px] min-w-[44px]"
+            className="w-8 h-8 bg-accent rounded-full flex items-center justify-center hover:opacity-80 transition-opacity min-h-[44px] min-w-[44px]"
           >
             <span className="text-white text-xs font-semibold">
               {user.name.charAt(0).toUpperCase()}
