@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from datetime import datetime, timedelta
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 import httpx
@@ -7,8 +9,8 @@ import re
 from ..database import get_db
 from ..config import settings
 from ..auth import create_access_token
-from ..models import User
-from ..schemas import TokenResponse, UserResponse
+from ..models import User, Integration
+from ..encryption import encrypt_token
 
 router = APIRouter()
 
@@ -35,8 +37,46 @@ async def google_login():
     return RedirectResponse(url)
 
 
+def _upsert_integration(db: Session, user_id: str, provider: str, access_token: str, refresh_token: str | None, expires_at: datetime | None):
+    existing = db.query(Integration).filter(
+        Integration.user_id == user_id,
+        Integration.provider == provider,
+    ).first()
+    if existing:
+        existing.access_token = encrypt_token(access_token)
+        if refresh_token:
+            existing.refresh_token = encrypt_token(refresh_token)
+        existing.expires_at = expires_at
+        existing.is_active = True
+    else:
+        db.add(Integration(
+            user_id=user_id,
+            provider=provider,
+            access_token=encrypt_token(access_token),
+            refresh_token=encrypt_token(refresh_token) if refresh_token else None,
+            expires_at=expires_at,
+        ))
+    db.commit()
+
+
+async def _background_gmail_sync(user_id: str, access_token: str):
+    """Kick off initial Gmail metadata sync after login."""
+    import logging
+    logger = logging.getLogger(__name__)
+    from ..database import SessionLocal
+    from ..services.gmail_service import fetch_gmail_metadata
+    db = SessionLocal()
+    try:
+        synced = await fetch_gmail_metadata(access_token, user_id, db)
+        logger.info(f"Background Gmail sync complete for user {user_id}: {synced} threads synced")
+    except Exception as e:
+        logger.error(f"Background Gmail sync failed for user {user_id}: {e}", exc_info=True)
+    finally:
+        db.close()
+
+
 @router.get("/google/callback")
-async def google_callback(code: str, db: Session = Depends(get_db)):
+async def google_callback(code: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Handle Google OAuth callback"""
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=400, detail="Google OAuth not configured")
@@ -68,6 +108,10 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
 
         user_info = user_res.json()
 
+    access_token = tokens["access_token"]
+    refresh_token = tokens.get("refresh_token")
+    expires_at = datetime.utcnow() + timedelta(seconds=tokens.get("expires_in", 3600))
+
     # Find or create user
     google_id = user_info.get("sub")
     email = user_info.get("email", "")
@@ -98,12 +142,19 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
 
+    # Store OAuth tokens for Gmail and Calendar (same token set)
+    _upsert_integration(db, user.id, "gmail", access_token, refresh_token, expires_at)
+    _upsert_integration(db, user.id, "google_calendar", access_token, refresh_token, expires_at)
+
+    # Kick off initial Gmail sync in the background
+    background_tasks.add_task(_background_gmail_sync, user.id, access_token)
+
     # Create JWT
-    access_token = create_access_token({"sub": user.id})
+    jwt_token = create_access_token({"sub": user.id})
 
     # Redirect to frontend with token
     return RedirectResponse(
-        f"{settings.FRONTEND_URL}/app/today?token={access_token}"
+        f"{settings.FRONTEND_URL}/app/today?token={jwt_token}"
     )
 
 

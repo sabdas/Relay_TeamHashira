@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import datetime
 
 from ..database import get_db
 from ..auth import get_current_user
@@ -16,6 +17,14 @@ async def list_contacts(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if current_user.is_demo_user:
+        from ..services.demo_service import get_demo_contacts_data
+        now = datetime.utcnow()
+        return [
+            {**c, "user_id": current_user.id, "created_at": now}
+            for c in get_demo_contacts_data()
+        ]
+
     query = db.query(Contact).filter(Contact.user_id == current_user.id)
     if search:
         pattern = f"%{search}%"

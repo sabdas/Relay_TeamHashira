@@ -3,125 +3,21 @@
 import { useState } from 'react'
 import KanbanBoard, { type KanbanColumn } from '@/components/ui/KanbanBoard'
 import { type KanbanDeal } from '@/components/ui/KanbanCard'
-
-const DEMO_DEALS: KanbanDeal[] = [
-  {
-    id: '1',
-    contact_name: 'Arjun Malhotra',
-    company: 'Kira Health',
-    warmth: 'Hot',
-    silence_days: 3,
-    deal_size: '₹12L ARR',
-    stage: 'Proposal Out',
-    last_activity: new Date(Date.now() - 3 * 86400000).toISOString(),
-    next_action: 'Follow up on pilot proposal',
-  },
-  {
-    id: '2',
-    contact_name: 'Sneha Kapoor',
-    company: 'Groww',
-    warmth: 'Warm',
-    silence_days: 7,
-    deal_size: '₹8L ARR',
-    stage: 'In Conversation',
-    last_activity: new Date(Date.now() - 7 * 86400000).toISOString(),
-    next_action: 'Check security review timeline',
-  },
-  {
-    id: '3',
-    contact_name: 'Vikram Nair',
-    company: 'Razorpay',
-    warmth: 'Warm',
-    silence_days: 5,
-    deal_size: '₹25L ARR',
-    stage: 'Qualified',
-    last_activity: new Date(Date.now() - 5 * 86400000).toISOString(),
-    next_action: 'Loop in CTO',
-  },
-  {
-    id: '4',
-    contact_name: 'Priya Sharma',
-    company: 'Meesho',
-    warmth: 'Hot',
-    silence_days: 1,
-    deal_size: '₹18L ARR',
-    stage: 'Closing',
-    last_activity: new Date(Date.now() - 86400000).toISOString(),
-    next_action: 'Send final contract',
-  },
-  {
-    id: '5',
-    contact_name: 'Rohan Verma',
-    company: 'Swiggy',
-    warmth: 'Warm',
-    silence_days: 2,
-    deal_size: 'TBD',
-    stage: 'On Radar',
-    last_activity: new Date(Date.now() - 2 * 86400000).toISOString(),
-    next_action: 'Schedule intro call',
-  },
-  {
-    id: '6',
-    contact_name: 'Neha Joshi',
-    company: 'CRED',
-    warmth: 'Hot',
-    silence_days: 0,
-    deal_size: '₹30L ARR',
-    stage: 'In Conversation',
-    last_activity: new Date().toISOString(),
-    next_action: 'Prepare ROI deck for team demo',
-  },
-  {
-    id: '7',
-    contact_name: 'Amit Patel',
-    company: 'PharmEasy',
-    warmth: 'Cooling',
-    silence_days: 18,
-    deal_size: '₹15L ARR',
-    stage: 'Proposal Out',
-    last_activity: new Date(Date.now() - 18 * 86400000).toISOString(),
-    next_action: 'Re-engage — no response to proposal',
-  },
-  {
-    id: '8',
-    contact_name: 'Rahul Gupta',
-    company: 'Zepto',
-    warmth: 'Warm',
-    silence_days: 4,
-    deal_size: '₹10L ARR',
-    stage: 'Qualified',
-    last_activity: new Date(Date.now() - 4 * 86400000).toISOString(),
-    next_action: 'Send enterprise pricing',
-  },
-  {
-    id: '9',
-    contact_name: 'Kavya Reddy',
-    company: 'Urban Company',
-    warmth: 'Cold',
-    silence_days: 30,
-    stage: 'On Radar',
-    last_activity: new Date(Date.now() - 30 * 86400000).toISOString(),
-  },
-]
+import LoadingAnimation from '@/components/ui/LoadingAnimation'
+import { useApi } from '@/hooks/useApi'
+import { dealsApi } from '@/lib/api'
 
 const STAGES = ['On Radar', 'In Conversation', 'Qualified', 'Proposal Out', 'Closing']
 
-function buildColumns(deals: KanbanDeal[]): KanbanColumn[] {
-  return STAGES.map((stage) => ({
-    id: stage,
-    title: stage,
-    color: '',
-    deals: deals.filter((d) => d.stage === stage),
-  }))
-}
-
 export default function PipelinePage() {
-  const [deals, setDeals] = useState(DEMO_DEALS)
+  const { data: columns, isLoading } = useApi<KanbanColumn[]>(() => dealsApi.pipeline())
   const [selectedDeal, setSelectedDeal] = useState<KanbanDeal | null>(null)
 
-  const columns = buildColumns(deals)
+  if (isLoading) return <LoadingAnimation />
 
-  const totalValue = deals
+  const allDeals = (columns ?? []).flatMap((c) => c.deals)
+
+  const totalValue = allDeals
     .filter((d) => d.deal_size && d.deal_size !== 'TBD')
     .reduce((sum, d) => {
       const val = parseFloat(d.deal_size?.replace(/[₹L ARR]/g, '') || '0')
@@ -134,7 +30,7 @@ export default function PipelinePage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-xl font-bold text-primary">Pipeline</h2>
-          <p className="text-sm text-gray-400 mt-0.5">{deals.length} deals · ₹{totalValue}L ARR tracked</p>
+          <p className="text-sm text-gray-400 mt-0.5">{allDeals.length} deals · ₹{totalValue}L ARR tracked</p>
         </div>
         <button className="inline-flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors min-h-[44px]">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -147,7 +43,7 @@ export default function PipelinePage() {
       {/* Stage summary */}
       <div className="grid grid-cols-5 gap-2">
         {STAGES.map((stage) => {
-          const count = deals.filter((d) => d.stage === stage).length
+          const count = allDeals.filter((d) => d.stage === stage).length
           return (
             <div key={stage} className="text-center">
               <div className="text-xl font-bold text-primary">{count}</div>
@@ -160,7 +56,7 @@ export default function PipelinePage() {
       {/* Kanban board — horizontal scroll on mobile */}
       <div className="-mx-4 md:-mx-6 px-4 md:px-6">
         <KanbanBoard
-          columns={columns}
+          columns={columns ?? []}
           onCardClick={(deal) => setSelectedDeal(deal)}
         />
       </div>

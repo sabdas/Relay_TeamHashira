@@ -3,104 +3,35 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import WarmthChip from '@/components/ui/WarmthChip'
-import { formatDistanceToNow } from 'date-fns'
+import LoadingAnimation from '@/components/ui/LoadingAnimation'
+import { useApi } from '@/hooks/useApi'
+import { contactsApi } from '@/lib/api'
 
-const DEMO_CONTACTS = [
-  {
-    id: 'c1',
-    name: 'Arjun Malhotra',
-    email: 'arjun@kirahealth.in',
-    company: 'Kira Health',
-    role: 'CEO',
-    warmth: 'Hot',
-    silence_days: 3,
-    deal_count: 1,
-    last_activity: new Date(Date.now() - 3 * 86400000).toISOString(),
-    stage: 'Proposal Out',
-  },
-  {
-    id: 'c2',
-    name: 'Sneha Kapoor',
-    email: 'sneha.kapoor@groww.in',
-    company: 'Groww',
-    role: 'VP Engineering',
-    warmth: 'Warm',
-    silence_days: 7,
-    deal_count: 1,
-    last_activity: new Date(Date.now() - 7 * 86400000).toISOString(),
-    stage: 'In Conversation',
-  },
-  {
-    id: 'c3',
-    name: 'Vikram Nair',
-    email: 'vikram@razorpay.com',
-    company: 'Razorpay',
-    role: 'Head of Partnerships',
-    warmth: 'Warm',
-    silence_days: 5,
-    deal_count: 1,
-    last_activity: new Date(Date.now() - 5 * 86400000).toISOString(),
-    stage: 'Qualified',
-  },
-  {
-    id: 'c4',
-    name: 'Priya Sharma',
-    email: 'priya.sharma@meesho.com',
-    company: 'Meesho',
-    role: 'CTO',
-    warmth: 'Hot',
-    silence_days: 1,
-    deal_count: 1,
-    last_activity: new Date(Date.now() - 86400000).toISOString(),
-    stage: 'Closing',
-  },
-  {
-    id: 'c5',
-    name: 'Rohan Verma',
-    email: 'rohan.verma@swiggy.in',
-    company: 'Swiggy',
-    role: 'Head of Product',
-    warmth: 'Warm',
-    silence_days: 2,
-    deal_count: 1,
-    last_activity: new Date(Date.now() - 2 * 86400000).toISOString(),
-    stage: 'On Radar',
-  },
-  {
-    id: 'c6',
-    name: 'Neha Joshi',
-    email: 'neha@cred.club',
-    company: 'CRED',
-    role: 'Director of Finance',
-    warmth: 'Hot',
-    silence_days: 0,
-    deal_count: 1,
-    last_activity: new Date().toISOString(),
-    stage: 'In Conversation',
-  },
-  {
-    id: 'c7',
-    name: 'Amit Patel',
-    email: 'amit.patel@pharmeasy.in',
-    company: 'PharmEasy',
-    role: 'COO',
-    warmth: 'Cooling',
-    silence_days: 18,
-    deal_count: 1,
-    last_activity: new Date(Date.now() - 18 * 86400000).toISOString(),
-    stage: 'Proposal Out',
-  },
-]
+type Contact = {
+  id: string
+  name: string
+  email?: string
+  company?: string
+  role?: string
+  warmth?: string
+  silence_days?: number
+  stage?: string
+}
 
 export default function ContactsPage() {
+  const { data: contacts, isLoading } = useApi<Contact[]>(() => contactsApi.list())
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<string>('all')
 
-  const filtered = DEMO_CONTACTS.filter((c) => {
+  if (isLoading) return <LoadingAnimation />
+
+  const allContacts = contacts ?? []
+
+  const filtered = allContacts.filter((c) => {
     const matchSearch =
       search === '' ||
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.company.toLowerCase().includes(search.toLowerCase())
+      (c.company ?? '').toLowerCase().includes(search.toLowerCase())
     const matchFilter = filter === 'all' || c.warmth === filter
     return matchSearch && matchFilter
   })
@@ -111,7 +42,7 @@ export default function ContactsPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-xl font-bold text-primary">Contacts</h2>
-          <p className="text-sm text-gray-400 mt-0.5">{DEMO_CONTACTS.length} contacts tracked</p>
+          <p className="text-sm text-gray-400 mt-0.5">{allContacts.length} contacts tracked</p>
         </div>
         <button className="inline-flex items-center gap-2 bg-accent text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors min-h-[44px]">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -171,23 +102,29 @@ export default function ContactsPage() {
                 <span className="font-medium text-primary text-sm group-hover:text-accent transition-colors">
                   {contact.name}
                 </span>
-                <span className="text-xs text-gray-400">{contact.role}</span>
+                {contact.role && <span className="text-xs text-gray-400">{contact.role}</span>}
               </div>
-              <p className="text-xs text-gray-400 truncate">{contact.company} · {contact.email}</p>
+              <p className="text-xs text-gray-400 truncate">
+                {[contact.company, contact.email].filter(Boolean).join(' · ')}
+              </p>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{contact.stage}</span>
-                <span className="text-xs text-gray-400">
-                  {contact.silence_days === 0
-                    ? 'Active today'
-                    : `${contact.silence_days}d ago`}
-                </span>
+                {contact.stage && (
+                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{contact.stage}</span>
+                )}
+                {contact.silence_days != null && (
+                  <span className="text-xs text-gray-400">
+                    {contact.silence_days === 0 ? 'Active today' : `${contact.silence_days}d ago`}
+                  </span>
+                )}
               </div>
             </div>
 
             {/* Warmth */}
-            <div className="flex-shrink-0">
-              <WarmthChip warmth={contact.warmth} />
-            </div>
+            {contact.warmth && (
+              <div className="flex-shrink-0">
+                <WarmthChip warmth={contact.warmth} />
+              </div>
+            )}
 
             {/* Arrow */}
             <svg className="w-4 h-4 text-gray-300 flex-shrink-0 group-hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">

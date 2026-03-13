@@ -1,76 +1,26 @@
 'use client'
 
-import { useState } from 'react'
-import { formatDistanceToNow, format } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import InferredBadge from '@/components/ui/InferredBadge'
+import LoadingAnimation from '@/components/ui/LoadingAnimation'
+import { useApi } from '@/hooks/useApi'
+import { emailApi } from '@/lib/api'
+import { useState } from 'react'
 
-const DEMO_THREADS = [
-  {
-    id: 'th1',
-    contact_name: 'Arjun Malhotra',
-    company: 'Kira Health',
-    subject: 'Re: Pilot proposal — week 2 check-in',
-    thread_count: 6,
-    last_message: new Date(Date.now() - 3 * 86400000).toISOString(),
-    reply_latency_hours: 4.2,
-    signal: 'Positive momentum — 6 replies in 5 days',
-    sentiment: 'positive',
-    is_inferred: true,
-    confidence: 87,
-  },
-  {
-    id: 'th2',
-    contact_name: 'Sneha Kapoor',
-    company: 'Groww',
-    subject: 'Security & compliance questionnaire',
-    thread_count: 4,
-    last_message: new Date(Date.now() - 7 * 86400000).toISOString(),
-    reply_latency_hours: 18.5,
-    signal: 'Slowing — 7 day gap since last reply',
-    sentiment: 'neutral',
-    is_inferred: true,
-    confidence: 72,
-  },
-  {
-    id: 'th3',
-    contact_name: 'Priya Sharma',
-    company: 'Meesho',
-    subject: 'Re: Contract review — final terms',
-    thread_count: 9,
-    last_message: new Date(Date.now() - 86400000).toISOString(),
-    reply_latency_hours: 1.8,
-    signal: 'High velocity — fast replies, close to closing',
-    sentiment: 'positive',
-    is_inferred: true,
-    confidence: 95,
-  },
-  {
-    id: 'th4',
-    contact_name: 'Vikram Nair',
-    company: 'Razorpay',
-    subject: 'Intro: Platform partnership discussion',
-    thread_count: 3,
-    last_message: new Date(Date.now() - 5 * 86400000).toISOString(),
-    reply_latency_hours: 24,
-    signal: 'Active — waiting on CTO introduction',
-    sentiment: 'neutral',
-    is_inferred: false,
-    confidence: 90,
-  },
-  {
-    id: 'th5',
-    contact_name: 'Amit Patel',
-    company: 'PharmEasy',
-    subject: 'Proposal: Q3 enterprise rollout',
-    thread_count: 2,
-    last_message: new Date(Date.now() - 18 * 86400000).toISOString(),
-    reply_latency_hours: null,
-    signal: 'No reply to proposal in 18 days — at risk',
-    sentiment: 'negative',
-    is_inferred: true,
-    confidence: 82,
-  },
-]
+type EmailDigestItem = {
+  id: string
+  thread_id: string
+  contact_name: string | null
+  company: string | null
+  subject: string | null
+  thread_count: number
+  last_message: string | null
+  reply_latency_hours: number | null
+  signal: string
+  sentiment: 'positive' | 'neutral' | 'negative'
+  is_inferred: boolean
+  confidence: number
+}
 
 const SENTIMENT_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
   positive: { bg: 'bg-green-50', text: 'text-green-700', dot: 'bg-green-500' },
@@ -80,9 +30,30 @@ const SENTIMENT_CONFIG: Record<string, { bg: string; text: string; dot: string }
 
 export default function EmailDigestPage() {
   const [expanded, setExpanded] = useState<string | null>(null)
+  const { data: threads, isLoading, error } = useApi<EmailDigestItem[]>(() => emailApi.digest())
 
-  const totalThreads = DEMO_THREADS.length
-  const activeThreads = DEMO_THREADS.filter((t) => t.sentiment !== 'negative').length
+  if (isLoading) return <LoadingAnimation />
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-bold text-primary">Email Digest</h2>
+          <p className="text-sm text-gray-400 mt-0.5">Thread metadata signals — email bodies are never read</p>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">
+          {error.includes('Gmail not connected')
+            ? 'Gmail is not connected. Go to Settings → Integrations to connect your Gmail account.'
+            : 'Failed to load email digest. Please try again later.'}
+        </div>
+      </div>
+    )
+  }
+
+  const items = threads ?? []
+  const totalThreads = items.length
+  const positiveCount = items.filter((t) => t.sentiment === 'positive').length
+  const atRiskCount = items.filter((t) => t.sentiment === 'negative').length
 
   return (
     <div className="space-y-6">
@@ -101,13 +72,11 @@ export default function EmailDigestPage() {
           <div className="text-xs text-gray-400 mt-0.5">Active threads</div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-          <div className="text-2xl font-bold text-green-600">{activeThreads}</div>
+          <div className="text-2xl font-bold text-green-600">{positiveCount}</div>
           <div className="text-xs text-gray-400 mt-0.5">Positive signals</div>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-          <div className="text-2xl font-bold text-red-500">
-            {DEMO_THREADS.filter((t) => t.sentiment === 'negative').length}
-          </div>
+          <div className="text-2xl font-bold text-red-500">{atRiskCount}</div>
           <div className="text-xs text-gray-400 mt-0.5">At risk</div>
         </div>
       </div>
@@ -126,10 +95,17 @@ export default function EmailDigestPage() {
         </div>
       </div>
 
+      {/* Empty state */}
+      {items.length === 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+          <p className="text-sm text-gray-400">No email threads synced yet.</p>
+        </div>
+      )}
+
       {/* Thread list */}
       <div className="space-y-3">
-        {DEMO_THREADS.map((thread) => {
-          const sentiment = SENTIMENT_CONFIG[thread.sentiment]
+        {items.map((thread) => {
+          const sentiment = SENTIMENT_CONFIG[thread.sentiment] ?? SENTIMENT_CONFIG.neutral
           const isExpanded = expanded === thread.id
 
           return (
@@ -144,15 +120,15 @@ export default function EmailDigestPage() {
                 {/* Avatar */}
                 <div className="w-9 h-9 bg-accent-light rounded-xl flex items-center justify-center flex-shrink-0">
                   <span className="text-accent font-semibold text-sm">
-                    {thread.contact_name.charAt(0)}
+                    {(thread.contact_name ?? '?').charAt(0)}
                   </span>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-primary text-sm">{thread.contact_name}</span>
-                    <span className="text-xs text-gray-400">{thread.company}</span>
+                    <span className="font-medium text-primary text-sm">{thread.contact_name ?? 'Unknown'}</span>
+                    {thread.company && <span className="text-xs text-gray-400">{thread.company}</span>}
                     {thread.is_inferred && <InferredBadge confidence={thread.confidence} />}
                   </div>
                   <p className="text-xs text-gray-600 mt-0.5 truncate">{thread.subject}</p>
@@ -183,15 +159,15 @@ export default function EmailDigestPage() {
                     <div className="bg-gray-50 rounded-xl p-3">
                       <p className="text-xs text-gray-400 mb-1">Avg reply time</p>
                       <p className="text-sm font-semibold text-primary">
-                        {thread.reply_latency_hours
-                          ? `${thread.reply_latency_hours}h`
-                          : 'No reply'}
+                        {thread.reply_latency_hours ? `${thread.reply_latency_hours}h` : 'No reply'}
                       </p>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-3">
                       <p className="text-xs text-gray-400 mb-1">Last activity</p>
                       <p className="text-sm font-semibold text-primary">
-                        {formatDistanceToNow(new Date(thread.last_message), { addSuffix: true })}
+                        {thread.last_message
+                          ? formatDistanceToNow(new Date(thread.last_message), { addSuffix: true })
+                          : '—'}
                       </p>
                     </div>
                   </div>

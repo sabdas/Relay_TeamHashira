@@ -34,7 +34,7 @@ async def fetch_gmail_metadata(
             params=params,
         )
         if res.status_code != 200:
-            raise Exception(f"Gmail API error: {res.status_code}")
+            raise Exception(f"Gmail API error: {res.status_code} — {res.text}")
 
         data = res.json()
         threads = data.get("threads", [])
@@ -83,6 +83,8 @@ async def fetch_gmail_metadata(
                 Email.thread_id == thread_id,
             ).first()
 
+            reply_latency = calculate_reply_latency(messages) or None
+
             if not existing:
                 email = Email(
                     user_id=user_id,
@@ -92,9 +94,15 @@ async def fetch_gmail_metadata(
                     subject=subject,
                     timestamp=timestamp,
                     thread_count=len(messages),
+                    reply_latency_hours=reply_latency,
                 )
                 db.add(email)
                 synced += 1
+            else:
+                # Update thread_count and latency in case thread has grown
+                existing.thread_count = len(messages)
+                if reply_latency:
+                    existing.reply_latency_hours = reply_latency
 
         db.commit()
         return synced

@@ -16,6 +16,10 @@ async def list_pending(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if current_user.is_demo_user:
+        from ..services.demo_service import get_demo_pending_data
+        return get_demo_pending_data()
+
     return db.query(PendingAction).filter(
         PendingAction.user_id == current_user.id,
         PendingAction.approved == False,

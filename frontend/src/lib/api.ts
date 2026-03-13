@@ -46,22 +46,23 @@ export const authApi = {
 
 // ---- Today View ----
 export const todayApi = {
-  get: () => api.get('/today'),
+  get: () => api.get('/today/'),
 }
 
 // ---- Deals ----
 export const dealsApi = {
-  list: () => api.get('/deals'),
+  list: () => api.get('/deals/'),
   get: (id: string) => api.get(`/deals/${id}`),
   update: (id: string, data: unknown) => api.patch(`/deals/${id}`, data),
-  create: (data: unknown) => api.post('/deals', data),
+  create: (data: unknown) => api.post('/deals/', data),
+  pipeline: () => api.get('/deals/pipeline/kanban'),
 }
 
 // ---- Contacts ----
 export const contactsApi = {
-  list: () => api.get('/contacts'),
+  list: () => api.get('/contacts/'),
   get: (id: string) => api.get(`/contacts/${id}`),
-  create: (data: unknown) => api.post('/contacts', data),
+  create: (data: unknown) => api.post('/contacts/', data),
   update: (id: string, data: unknown) => api.patch(`/contacts/${id}`, data),
 }
 

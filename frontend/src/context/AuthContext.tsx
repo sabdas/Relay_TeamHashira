@@ -57,6 +57,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlToken = urlParams.get('token')
+
+    if (urlToken) {
+      // Store token first so the axios interceptor picks it up
+      localStorage.setItem('relay_token', urlToken)
+      api.get('/users/me')
+        .then(res => {
+          login(urlToken, res.data)
+          const url = new URL(window.location.href)
+          url.searchParams.delete('token')
+          window.history.replaceState({}, '', url.toString())
+        })
+        .catch(() => {
+          localStorage.removeItem('relay_token')
+        })
+        .finally(() => setIsLoading(false))
+      return
+    }
+
     const storedToken = localStorage.getItem('relay_token')
     const storedUser = localStorage.getItem('relay_user')
 
@@ -70,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     setIsLoading(false)
-  }, [])
+  }, [login])
 
   return (
     <AuthContext.Provider value={{ user, token, isLoading, isDemo, login, logout, refreshUser }}>

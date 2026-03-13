@@ -1,123 +1,50 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import WarmthChip from '@/components/ui/WarmthChip'
 import InferredBadge from '@/components/ui/InferredBadge'
 import LoadingAnimation from '@/components/ui/LoadingAnimation'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
+import { useApi } from '@/hooks/useApi'
+import { todayApi } from '@/lib/api'
 
 type Tab = 'followups' | 'drafts' | 'upcoming' | 'offtrack'
 
-const DEMO_DATA = {
-  followups: [
-    {
-      id: '1',
-      contact_name: 'Arjun Malhotra',
-      company: 'Kira Health',
-      warmth: 'Hot',
-      silence_days: 3,
-      last_activity: new Date(Date.now() - 3 * 86400000).toISOString(),
-      suggestion: 'Send follow-up on the pilot proposal you sent last Tuesday.',
-      thread_count: 12,
-      is_inferred: true,
-      confidence: 87,
-      contact_id: 'c1',
-    },
-    {
-      id: '2',
-      contact_name: 'Sneha Kapoor',
-      company: 'Groww',
-      warmth: 'Warm',
-      silence_days: 7,
-      last_activity: new Date(Date.now() - 7 * 86400000).toISOString(),
-      suggestion: 'Check in on the security review timeline — last meeting was a week ago.',
-      thread_count: 6,
-      is_inferred: false,
-      confidence: 92,
-      contact_id: 'c2',
-    },
-    {
-      id: '3',
-      contact_name: 'Vikram Nair',
-      company: 'Razorpay',
-      warmth: 'Warm',
-      silence_days: 5,
-      last_activity: new Date(Date.now() - 5 * 86400000).toISOString(),
-      suggestion: 'Loop in their CTO as discussed — Vikram mentioned this in the last call.',
-      thread_count: 9,
-      is_inferred: true,
-      confidence: 74,
-      contact_id: 'c3',
-    },
-  ],
-  drafts: [
-    {
-      id: 'd1',
-      contact_name: 'Priya Sharma',
-      company: 'Meesho',
-      subject: 'Re: Integration timeline & next steps',
-      snippet: 'Hi Priya, following up on our discussion about the Q3 integration...',
-      created_at: new Date(Date.now() - 2 * 3600000).toISOString(),
-    },
-    {
-      id: 'd2',
-      contact_name: 'Rahul Gupta',
-      company: 'Zepto',
-      subject: 'Proposal: Enterprise plan for 50-100 users',
-      snippet: 'Hi Rahul, as promised here\'s the breakdown of pricing for your team...',
-      created_at: new Date(Date.now() - 5 * 3600000).toISOString(),
-    },
-  ],
-  upcoming: [
-    {
-      id: 'u1',
-      title: 'Intro call with Rohan Verma',
-      company: 'Swiggy',
-      start_time: new Date(Date.now() + 2 * 3600000).toISOString(),
-      duration_mins: 30,
-      contact_id: 'c4',
-      prep_note: 'New inbound — referred by Vikram. First call, discovery focus.',
-    },
-    {
-      id: 'u2',
-      title: 'Demo: Neha Joshi & team',
-      company: 'CRED',
-      start_time: new Date(Date.now() + 5 * 3600000).toISOString(),
-      duration_mins: 60,
-      contact_id: 'c5',
-      prep_note: '3 stakeholders joining. Prepare ROI calculator slide.',
-    },
-  ],
-  offtrack: [
-    {
-      id: 'o1',
-      contact_name: 'Amit Patel',
-      company: 'PharmEasy',
-      warmth: 'Cooling',
-      silence_days: 18,
-      last_activity: new Date(Date.now() - 18 * 86400000).toISOString(),
-      stage: 'Proposal Out',
-      risk: 'No response to proposal sent 18 days ago. Moving to cooling.',
-    },
-  ],
+type FollowupItem = {
+  id: string; contact_name: string; company?: string; warmth: string
+  silence_days: number; last_activity: string; suggestion: string
+  thread_count: number; is_inferred: boolean; confidence?: number; contact_id: string
 }
-
-const TABS: { id: Tab; label: string; count: number }[] = [
-  { id: 'followups', label: 'Follow-ups', count: DEMO_DATA.followups.length },
-  { id: 'drafts', label: 'Drafts', count: DEMO_DATA.drafts.length },
-  { id: 'upcoming', label: 'Upcoming', count: DEMO_DATA.upcoming.length },
-  { id: 'offtrack', label: 'Off Track', count: DEMO_DATA.offtrack.length },
-]
+type DraftItem = {
+  id: string; contact_name: string; company?: string
+  subject: string; snippet: string; created_at: string
+}
+type UpcomingItem = {
+  id: string; title: string; company?: string
+  start_time: string; duration_mins: number; prep_note?: string
+}
+type OfftrackItem = {
+  id: string; contact_name: string; company?: string; warmth: string
+  silence_days: number; last_activity: string; stage: string; risk: string
+}
+type TodayData = {
+  followups: FollowupItem[]; drafts: DraftItem[]
+  upcoming: UpcomingItem[]; offtrack: OfftrackItem[]
+}
 
 export default function TodayPage() {
   const [activeTab, setActiveTab] = useState<Tab>('followups')
-  const [isLoading, setIsLoading] = useState(true)
+  const { data, isLoading } = useApi<TodayData>(() => todayApi.get())
 
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 1800)
-    return () => clearTimeout(t)
-  }, [])
+  const d: TodayData = data ?? { followups: [], drafts: [], upcoming: [], offtrack: [] }
+
+  const TABS: { id: Tab; label: string; count: number }[] = [
+    { id: 'followups', label: 'Follow-ups', count: d.followups.length },
+    { id: 'drafts', label: 'Drafts', count: d.drafts.length },
+    { id: 'upcoming', label: 'Upcoming', count: d.upcoming.length },
+    { id: 'offtrack', label: 'Off Track', count: d.offtrack.length },
+  ]
 
   if (isLoading) {
     return <LoadingAnimation />
@@ -159,7 +86,7 @@ export default function TodayPage() {
       <div>
         {activeTab === 'followups' && (
           <div className="space-y-3">
-            {DEMO_DATA.followups.map((item) => (
+            {d.followups.map((item) => (
               <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 animate-fade-in">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 bg-accent-light rounded-xl flex items-center justify-center flex-shrink-0">
@@ -204,7 +131,7 @@ export default function TodayPage() {
 
         {activeTab === 'drafts' && (
           <div className="space-y-3">
-            {DEMO_DATA.drafts.map((draft) => (
+            {d.drafts.map((draft) => (
               <div key={draft.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 animate-fade-in">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -237,7 +164,7 @@ export default function TodayPage() {
 
         {activeTab === 'upcoming' && (
           <div className="space-y-3">
-            {DEMO_DATA.upcoming.map((event) => (
+            {d.upcoming.map((event) => (
               <div key={event.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 animate-fade-in">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 text-blue-500">
@@ -275,7 +202,7 @@ export default function TodayPage() {
 
         {activeTab === 'offtrack' && (
           <div className="space-y-3">
-            {DEMO_DATA.offtrack.map((item) => (
+            {d.offtrack.map((item) => (
               <div key={item.id} className="bg-white rounded-2xl border border-red-100 shadow-sm p-4 animate-fade-in">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">

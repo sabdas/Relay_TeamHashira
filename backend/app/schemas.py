@@ -88,6 +88,10 @@ class ContactResponse(ContactBase):
     id: str
     user_id: str
     created_at: datetime
+    # Enriched from associated deal (optional)
+    warmth: Optional[str] = None
+    silence_days: Optional[int] = None
+    stage: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -141,6 +145,24 @@ class EmailResponse(BaseModel):
     timestamp: Optional[datetime] = None
     reply_latency_hours: Optional[float] = None
     thread_count: int
+
+    class Config:
+        from_attributes = True
+
+
+class EmailDigestItem(BaseModel):
+    id: str
+    thread_id: str
+    contact_name: Optional[str] = None
+    company: Optional[str] = None
+    subject: Optional[str] = None
+    thread_count: int
+    last_message: Optional[datetime] = None
+    reply_latency_hours: Optional[float] = None
+    signal: str
+    sentiment: str  # "positive" | "neutral" | "negative"
+    is_inferred: bool
+    confidence: int
 
     class Config:
         from_attributes = True

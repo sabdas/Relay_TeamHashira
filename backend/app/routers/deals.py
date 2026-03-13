@@ -91,6 +91,10 @@ async def get_pipeline_kanban(
     db: Session = Depends(get_db),
 ):
     """Return deals grouped by stage for Kanban view"""
+    if current_user.is_demo_user:
+        from ..services.demo_service import get_demo_pipeline_data
+        return get_demo_pipeline_data()
+
     stages = ["On Radar", "In Conversation", "Qualified", "Proposal Out", "Closing"]
     deals = db.query(Deal).filter(Deal.user_id == current_user.id).all()
 

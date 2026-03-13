@@ -4,7 +4,6 @@ from sqlalchemy import (
     Column, String, Boolean, DateTime, Integer, Float,
     ForeignKey, JSON, Text
 )
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -16,7 +15,7 @@ def gen_uuid():
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
     name = Column(String(255), nullable=False)
     company = Column(String(255), nullable=False)
     unique_key = Column(String(512), unique=True, nullable=False)  # name_company snake_case
@@ -39,8 +38,8 @@ class User(Base):
 class Integration(Base):
     __tablename__ = "integrations"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     provider = Column(String(50), nullable=False)  # gmail, google_calendar, notion
     access_token = Column(Text, nullable=True)   # encrypted
     refresh_token = Column(Text, nullable=True)  # encrypted
@@ -57,8 +56,8 @@ class Integration(Base):
 class Contact(Base):
     __tablename__ = "contacts"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=True)
     company = Column(String(255), nullable=True)
@@ -76,9 +75,9 @@ class Contact(Base):
 class Deal(Base):
     __tablename__ = "deals"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
-    contact_id = Column(UUID(as_uuid=False), ForeignKey("contacts.id"), nullable=True)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    contact_id = Column(String(36), ForeignKey("contacts.id"), nullable=True)
     title = Column(String(255), nullable=True)
     stage = Column(String(100), default="On Radar")  # On Radar, In Conversation, Qualified, Proposal Out, Closing
     warmth = Column(String(50), default="Warm")  # Hot, Warm, Cooling, Cold
@@ -100,8 +99,8 @@ class Deal(Base):
 class Email(Base):
     __tablename__ = "emails"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     thread_id = Column(String(255), nullable=False)
     message_id = Column(String(255), unique=True, nullable=True)
     sender = Column(String(500), nullable=True)
@@ -119,8 +118,8 @@ class Email(Base):
 class Meeting(Base):
     __tablename__ = "meetings"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     calendar_event_id = Column(String(255), unique=True, nullable=True)
     title = Column(String(500), nullable=False)
     participants = Column(JSON, nullable=True)  # list of email addresses
@@ -137,8 +136,8 @@ class Meeting(Base):
 class PendingAction(Base):
     __tablename__ = "pending_actions"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     action_type = Column(String(50), nullable=False)  # stage_change, note, contact, follow_up
     contact_name = Column(String(255), nullable=True)
     company = Column(String(255), nullable=True)
@@ -156,10 +155,10 @@ class PendingAction(Base):
 class ActivityLog(Base):
     __tablename__ = "activity_logs"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     entity_type = Column(String(50), nullable=False)  # deal, contact, email, meeting
-    entity_id = Column(UUID(as_uuid=False), nullable=True)
+    entity_id = Column(String(36), nullable=True)
     action = Column(String(255), nullable=False)
     extra_data = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
